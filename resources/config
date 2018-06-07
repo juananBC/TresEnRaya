@@ -1,0 +1,19 @@
+#Posiciones de cada pieza en Y
+0 = TORRE
+1 = CABALLO
+2 = ALFIL
+3 = REY
+4 = REINA
+5 = ALFIL
+6 = CABALLO
+7 = TORRE
+
+# Puntuaciones
+Peon = 10
+Caballo = 30
+Alfil = 35
+Torre = 55
+Reina = 100
+Rey = 1000
+
+profundidad = 4
