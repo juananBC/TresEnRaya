@@ -46,12 +46,11 @@ public class Agente {
 		arbol.setRaiz(raiz);		
 							
 		Nodo nodo =  minimax(arbol.getRaiz(), profundidad , MAX);
-		while(nodo.getParent() != arbol.getRaiz()) {
+		while(nodo.getParent() !=	arbol.getRaiz()) {
 			nodo = nodo.getParent();
 		}
 
 		Estado estado = nodo.getEstado();
-//		System.out.println(estado.getIdOrigen() + " " + estado.getIdDestino());
 		log.cerrar();
 		
 		
@@ -62,7 +61,7 @@ public class Agente {
 
 	private Nodo minimax(Nodo nodo, int prof, boolean isMaximizador) {
 
-		if(prof == 0 || nodo.isTerminal()) //|| nodo.getHijos().isEmpty() )
+		if(prof == 0 || nodo.isTerminal()) 
 			return nodo; 
 		
 		Nodo mejorValor;

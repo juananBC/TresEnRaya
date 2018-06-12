@@ -290,17 +290,5 @@ public class Controlador {
 		return rival;
 		
 	}
-
-
-	public boolean isEmpiezaCPU() {
-		return empiezaCPU;
-	}
-
-
-	public void setEmpiezaCPU(boolean empiezaCPU) {
-		this.empiezaCPU = empiezaCPU;
-	}
-	
-	
 	
 }
