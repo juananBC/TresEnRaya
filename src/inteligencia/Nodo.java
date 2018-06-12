@@ -4,18 +4,21 @@ import java.util.ArrayList;
 import java.util.List;
 
 import Gestor.Estado;
-import Juego.COLOR;
-import Juego.Pieza;
+import Juego.Ficha;
+import Juego.TIPO;
 
 public class Nodo {
 
+	
 	private Estado estado;
 	private List<Nodo> hijos;
 	private Nodo parent;
+	 
 	
-	public Nodo(COLOR color) {
+	
+	public Nodo() {
 		this.parent = null;
-		this.estado = new Estado(null, 1,1, 0, color);
+		this.estado = new Estado(-1, null, 0, null);
 	}
 	
 	public Nodo(Nodo parent, Estado estado) {
@@ -32,34 +35,22 @@ public class Nodo {
 //		return hijo;
 //	}
 	
-	public void calcPuntuacion(boolean isIncrement) {
-		if(hasParent()) {
-			Estado estadoPadre = parent.getEstado();
-			if(isIncrement)	estado.actualizaPuntos(estadoPadre.getPuntuacion());
-			else estado.actualizaPuntos(-estadoPadre.getPuntuacion());
-		}
-	}
-	
+
 	public static Nodo max(Nodo n1, Nodo n2) {
-		if(iguales(n1, n2)) {
-			if (n1.getEstado().getMata() != null) return n1;
-			if (n2.getEstado().getMata() != null) return n2;
-			return random(n1, n2);
-		}
+		if(iguales(n1, n2)) 
+			return getFromIguales(n1, n2);
 			
-		if(n1.getEstado().getPuntuacion() >= n2.getEstado().getPuntuacion())
+		if(n1.getEstado().getPuntuacion() > n2.getEstado().getPuntuacion())
 			return n1;
 		return n2;
 	}
 	
 	public static Nodo min(Nodo n1, Nodo n2) {
-		if(iguales(n1, n2)) {
-			if (n1.getEstado().getMata() != null) return n1;
-			if (n2.getEstado().getMata() != null) return n2;
-			return random(n1, n2);
-		}
+		if(iguales(n1, n2)) 
+			return getFromIguales(n1, n2);
 		
-		if(n1.getEstado().getPuntuacion() <= n2.getEstado().getPuntuacion())
+		
+		if(n1.getEstado().getPuntuacion() < n2.getEstado().getPuntuacion())
 			return n1;
 		return n2;
 	}
@@ -72,6 +63,16 @@ public class Nodo {
 		double rand = Math.random();		
 		if(rand < 0.5) return n1;
 		return n2;
+	}
+	
+	private static Nodo getFromIguales(Nodo n1,Nodo n2) {
+		Estado e1 = n1.getEstado();
+		Estado e2 = n2.getEstado();
+		
+		if(e1.getProfundidad() > e2.getProfundidad()) return n2;
+		else if(e1.getProfundidad() < e2.getProfundidad()) return n1;		
+
+		return random(n1, n2);
 	}
 	
 	public void addHijo(Nodo hijo) {	
@@ -88,7 +89,7 @@ public class Nodo {
 	}
 	
 	public boolean isTerminal() {
-		return hijos == null  || estado.finJuego();
+		return (estado != null  && estado.finJuego());
 	}
 	
 	public Estado getEstado() {

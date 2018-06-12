@@ -19,6 +19,7 @@ import javax.swing.JLabel;
 import com.jgoodies.forms.factories.DefaultComponentFactory;
 
 import Gestor.Controlador;
+import Juego.TIPO;
 import Juego.Tablero;
 import interfaz.Juego.DIRECCION;
 
@@ -53,16 +54,17 @@ public class GUI {
 		EventQueue.invokeLater(new Runnable() {
 			public void run() {
 				try {
-					System.out.println("Inicio del ajedrez");
+					System.out.println("Inicio tres en raya");
 					GUI window = new GUI();
 					window.frmAjedrez.setVisible(true);
 					
-					 Controlador gestor = new Controlador();
+					Controlador gestor = new Controlador(false, TIPO.O);
 					juego = new Juego(gestor, jpTablero);
 					
 					JPanel panel = new JPanel();
 					panel.setBackground(new Color(102, 205, 170));
 					window.frmAjedrez.getContentPane().add(panel, BorderLayout.EAST);
+					
 					
 
 				} catch (Exception e) {
@@ -78,7 +80,7 @@ public class GUI {
 
 	private void initialize() {
 		frmAjedrez = new JFrame();
-		frmAjedrez.setTitle("Ajedrez");
+		frmAjedrez.setTitle("Tres en raya");
 		frmAjedrez.setBounds(100, 100, 521, 516);
 		frmAjedrez.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frmAjedrez.getContentPane().setLayout(new BorderLayout(0, 0));
@@ -96,8 +98,7 @@ public class GUI {
 		lblNewLabel.addMouseListener(new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent arg0) {
-				juego.revertir();	// CPU
-				juego.revertir();	// Jugador
+				juego.revertir();	
 				jpTablero.repaint();
 				
 			}
@@ -105,30 +106,7 @@ public class GUI {
 		
 		lblNewLabel.setForeground(new Color(152, 251, 152));
 		jpControles.add(lblNewLabel);
-		frmAjedrez.addKeyListener(new KeyAdapter() {
-			@Override
-			public void keyPressed(KeyEvent e) {
-				if(juego != null) {
-					switch(e.getKeyCode()) {
-					case 37: // LEFT
-						juego.setOrientacion(DIRECCION.IZQUIERDA);
-						break;
-					case 38: // UP
-						juego.setOrientacion(DIRECCION.ARRIBA);
-						break;
-					case 39: // RIGHT
-						juego.setOrientacion(DIRECCION.DERECHA);
-						break;
-					case 40: // DOWN
-						juego.setOrientacion(DIRECCION.ABAJO);
-						break;
-					}
-					
-					juego.pintarTablero();
-					jpTablero.repaint();
-				}
-			}
-		});
+		
 		
 		jpTablero = new JPanel();
 		jpTablero.setBackground(new Color(255, 255, 255));

@@ -5,7 +5,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 
 import Gestor.Estado;
-import Juego.Pieza;
+import Juego.Ficha;
 
 public class Log {
 
@@ -14,7 +14,7 @@ public class Log {
 	public Log() {
 		try {
 			fichero = new BufferedWriter(
-					new FileWriter("C:\\Users\\JNBN007\\Desktop\\workspace\\JuegoDeMesa\\resources\\resultado.log"));
+					new FileWriter("C:\\Users\\JNBN007\\Desktop\\workspace\\TresEnRaya\\TresEnRaya\\resources\\resultado.log"));
 			
 			fichero.write("");
 		} catch (IOException e) {
@@ -27,6 +27,7 @@ public class Log {
 	
 		try {						
 			fichero.append(msg);
+			
 		} catch (Exception e) {
 			System.out.println("Error escritura");
 		}

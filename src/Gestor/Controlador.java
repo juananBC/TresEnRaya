@@ -9,14 +9,6 @@ import java.util.Set;
 import java.util.Stack;
 
 import Juego.*;
-import Juego.Movimiento.MOVIMIENTOS;
-import Juego.Pieza.NOMBRE;
-import Piezas.Alfil;
-import Piezas.Caballo;
-import Piezas.Peon;
-import Piezas.Reina;
-import Piezas.Rey;
-import Piezas.Torre;
 import inteligencia.Agente;
 
 public class Controlador {
@@ -30,355 +22,194 @@ public class Controlador {
 	
 	private Agente agente;
 	
+	private boolean empiezaCPU;
 	
-	public Controlador() {
+	public Controlador(boolean empiezaCPU, TIPO tipoJugador) {
 		prop = new Properties();
 		
 		int profundidad = 0;
 		try {
-			prop.load(new FileInputStream("C:\\Users\\JNBN007\\Desktop\\workspace\\JuegoDeMesa\\resources\\config"));
-			profundidad = Integer.parseInt(prop.getProperty("profundidad", "0"));
-		} catch (Exception e) {}
+			prop.load(new FileInputStream("C:\\Users\\JNBN007\\Desktop\\workspace\\TresEnRaya\\TresEnRaya\\config"));
+			profundidad = Integer.parseInt(prop.getProperty("profundidad", "-1"));
+		} catch (Exception e) {
+			profundidad = Integer.MAX_VALUE;
+		}
 		
-		pila = new Stack<Estado>();
-		turno = 0;
-		jugador = new Jugador(COLOR.BLANCO);
-		rival = new Jugador(COLOR.NEGRO);		
-		ganador = null;		
-		tablero = new Tablero();
-		colocarPiezas();
+		this.pila = new Stack<Estado>();
+		this.turno = 0;
+		this.jugador = new Jugador(tipoJugador);
+		this.rival = new Jugador( (tipoJugador == TIPO.X)? TIPO.O: TIPO.X );		
+		this.ganador = null;		
+		this.tablero = new Tablero();
+		
+		this.empiezaCPU = empiezaCPU;
 
-		agente = new Agente(this, profundidad , rival.getColor());
-	}
-	
-
-	/**
-	 * Vuelve atras el ultimo movimiento realizado.
-	 */
-	public void revertir() {		
-		if(pila.empty()) return;
-		
-		Estado estado = pila.pop();
-		
-		Casilla destino = getCasilla(estado.getIdDestino());
-		Casilla origen = getCasilla(estado.getIdOrigen());
-		
-		Pieza aux = destino.getPieza();
-		aux.retrasar();
-		
-		aux = Pieza.transformaReinaPeon(aux);
-		
-		destino.setPieza(estado.getMata());
-		origen.setPieza(aux);
-		
-		turno = estado.getTurno();
-		ganador = null;
+		this.agente = new Agente(this, profundidad , rival.getTipo());
 	}
 	
 	
-	public Jugador getContrincante() {		
-		if(turno % 2 == 1) return jugador;
-		return rival;
-	}
-	
-	public Jugador getJugadorActual() {
-		if(turno % 2 == 0) return jugador;
-		return rival;
+	public boolean ponerPieza(int idCasilla) {
+		if(ganador != null) return false;
 		
-	}
-	
-	
-	public Set<Integer> getOpcionesMover(int idCasilla) {		
+		Jugador player = getJugadorActual();
 		Casilla casilla = tablero.getCasilla(idCasilla);
-
-		Pieza pieza = casilla.getPieza();		
-		if(pieza == null) return null;
+				
+		Ficha pieza = new Ficha(player.getTipo());		
+		if(casilla.ocupar(pieza)) {			
+			guardarMovimiento(casilla);
+			return true;
+		} 
 		
-		Set<Integer> casillas = new HashSet<Integer>();
-		Set<MOVIMIENTOS> movs = new HashSet<MOVIMIENTOS>();
-		movs.addAll(pieza.getMovimientos()); 
-		movs.addAll(pieza.getMatar());	
+		return false;
 		
-		for(MOVIMIENTOS mov: movs) {
-			switch (mov) {
-			case HORIZONTAL:
-				casillas.addAll(getHorizontales(casilla));
-				break;
-			case DIAGONAL:
-				casillas.addAll(getDiagonales(casilla));
-			case L:
-				casillas.addAll(getLs(casilla));
-			default:
-				break;
-			}
-		}
-		
-		return casillas;	
 	}
 	
-	
-	public Set<Integer> getHorizontales(Casilla origen){
-		Set<Integer> casillas = new HashSet<Integer>();
-
-		int x = origen.getX();
-		int y = origen.getY();
-		
-		int px = 1;
-		int py = 0;
-		for(int n = 0; n < 2; n++) {
-			for (int i = 0; i < Tablero.TAMANO; i++) {
-				int X = px*i + py*x;
-				int Y = py*i + px*y;
-				Casilla destino = tablero.getCasilla(X, Y);
-				if(puedeMover(origen, destino))
-					casillas.add(destino.getId());
-			}
-			
-			px = 0;
-			py = 1;
+	public boolean quedanCasillas() {
+		for (int id = 0; id < Tablero.TAMANO_TOTAL; id++) {
+			if (!tablero.getCasilla(id).isOcupada())
+				return true;
 		}
 		
-		return casillas;
-	}
-	
-	public Set<Integer> getDiagonales(Casilla origen){
-		Set<Integer> casillas = new HashSet<Integer>();
-
-		int x = origen.getX();
-		int y = origen.getY();
-		
-		int dir = 1;
-		for(int n = 0; n < 2; n++) {
-			for (int i = 0; i < Tablero.TAMANO; i++) {
-				int X = (i + x) % Tablero.TAMANO;
-				int Y = (Tablero.TAMANO + dir*i + y) % Tablero.TAMANO;
-				Casilla destino = tablero.getCasilla(X, Y);
-				if(puedeMover(origen, destino) )
-					casillas.add(destino.getId());
-			}
-			
-			dir = -1;
-		}
-		
-		return casillas;
-	}
-	
-	public Set<Integer> getLs(Casilla origen){
-		Set<Integer> casillas = new HashSet<Integer>();
-
-		String mask;
-		int x = origen.getX();
-		int y = origen.getY();
-		int j;
-		
-		for (int i = 1; i < 3; i++) {
-			j = (i == 1)? 2:1;
-
-			for (int n = 0; n < 4; n++) {
-				mask = "0"+Integer.toBinaryString(n);
-				
-				// Coje los 2 ultimos bits
-				mask = mask.substring(mask.length() -2, mask.length());
-				int X = (mask.charAt(1) == '0' )? 1:-1;
-				int Y = (mask.charAt(0) == '0' )? 1:-1;
-				X = X*i + x;
-				Y = Y*j + y;
-				
-				Casilla destino = tablero.getCasilla(X, Y);
-				
-				if (puedeMover(origen, destino))
-					casillas.add(destino.getId());
-			}
-
-		}
-		
-		
-		return casillas;
+		return false;
 	}
 	
 	public Estado moverAgente() {
-		if(getJugadorActual() == rival) {		
+		if(getJugadorActual() == rival && ganador == null  ) {	
+			
 			Estado estado = agente.calculaMovimiento(this);
 			if(estado != null) {
-				boolean mover;
-				mover = mover(estado.getIdOrigen(), estado.getIdDestino());
-				if(mover)
+				ponerPieza(estado.getIdCasilla());
 				return estado;
 			}
 		}
 		return null;
 	}
 	
-	public boolean mover(int idOrigen, int idDestino) {		
-		if(idOrigen < 0 ||  idOrigen > Tablero.TAMANO_TOTAL || 
-			idDestino < 0 || idDestino > Tablero.TAMANO_TOTAL) return false;
-		
-		Casilla origen = tablero.getCasilla(idOrigen);
-		Casilla destino = tablero.getCasilla(idDestino);
-		
-		if(puedeMover(origen, destino)) {
 
-			Pieza pieza = origen.getPieza();
-			origen.liberar();
-			
-			Pieza mata = destino.ocupar(pieza);
-			if(mata != null) {
-				matar(mata, getContrincante());
-			}
-			
-			pieza.avanzar();
-//			pieza = convertirPeon(destino);
-			guardarMovimiento(mata, origen, destino);	
-			
-			return true;
-		} 
-		
-		return false;
-	}
-	
-	private void matar(Pieza pieza, Jugador jugador) {
-		jugador.matar();
-		
-		if(pieza.getNombre() == Pieza.NOMBRE.REY)
-			ganador = getJugadorActual();
-	}
-	
-	/**
-	 * Realiza el movimiento desde la casilla de origen a la casilla de destino.
-	 * Comprueba que es el movimiento valido de la pieza, si puede botar obstaculos
-	 * o que no haya obstaculos en caso de no poder botar
-	 */
-	private boolean puedeMover(Casilla origen, Casilla destino) { 
-	
-		if(ganador != null) 
-			return false;
-		
-		if(origen == null || destino == null || !origen.isOcupada()) return false;		
-		
-		Pieza pieza = origen.getPieza();	
-		if(pieza.getColor() != getJugadorActual().getColor())
-			return false;
-		
-		return (pieza.isValid(origen, destino) && (pieza.isPuedeSaltar() || !hayObstaculos(origen, destino)));
-	}
-	
-	
-	/**
-	 * Comprueba si en las casillas que separan 'origen' y 'destino' hay alguna
-	 * ficha que impida hacer el movimiento.
-	 */
-	private boolean hayObstaculos(Casilla origen, Casilla destino) {
-		Casilla tmp;
-		
-		// Origen y destino
-		int xo = origen.getX();
-		int yo = origen.getY();		
-		int xd = destino.getX();
-		int yd = destino.getY();
-		
-		int deltaX = xd - xo;
-		int deltaY = yd - yo;		
 
-		// Dirección de la separación de las casillas.
-		int dirX = (deltaX == 0)? 0 : (deltaX < 0)? -1:1;
-		int dirY = (deltaY == 0)? 0 : (deltaY < 0)? -1:1;		
-		int limitMax = Math.max(Math.abs(deltaX), Math.abs(deltaY));
+	
+	
+	private void guardarMovimiento(Casilla casilla) {
+		tablero.updateCasilla(casilla);
+		
+		int puntuacion = calculaPuntuacion();
+		Estado estado = new Estado(turno, casilla, puntuacion, ganador);
 
-		for (int i = 1; i < limitMax; i++) {
-			tmp = tablero.getCasilla(xo + i*dirX, yo + i*dirY);
-			if (tmp.isOcupada()) return true;
-		}
-		return false;			
-	}
-	
-	
-	private Pieza convertirPeon(Casilla casilla) {
-		Pieza p = casilla.getPieza();
-		
-		if(p  instanceof Peon) {
-
-			if (casilla.getY() == 0 || casilla.getY() == Tablero.TAMANO - 1) {
-				System.out.println(casilla.getX() + " , " + casilla.getY() + ", " + casilla.getId());
-				
-				// p.setNombre(NOMBRE.REINA);
-				Reina reina = new Reina(p.getColor());
-				reina.setFromPeon(true);
-				
-				casilla.setPieza(reina);
-
-				p = reina;
-			}
-			
-		}
-		
-		return p;
-		
-	}
-	
-	
-	private void guardarMovimiento(Pieza mata, Casilla origen, Casilla destino) {
-		tablero.updateCasilla(origen);
-		tablero.updateCasilla(destino);
-		
-//		Pieza pieza = destino.getPieza();
-		Estado estado = new Estado(mata, origen.getId(), destino.getId(), turno, getJugadorActual().getColor());
-		pila.push(estado);
-		
+		pila.push(estado);		
 		turno++;
 	}
 	
+	/**
+	 * Vuelve atras el ultimo movimiento realizado.
+	 */
+	public void revertir() {		
+		if(pila.empty()) return;
+		
+		Estado estado = pila.pop();		
+		Casilla casilla = getCasilla(estado.getIdCasilla());
+		casilla.liberar(); 
+		
+		turno = estado.getTurno();
+		ganador = null;
+		
+	}
 	
-	private void colocarPiezas() {		
-		for (int x = 0; x < Tablero.TAMANO; x++) {
-			for (int y = 0; y < Tablero.TAMANO; y++) {
-				ponerPieza(x ,y);					
-			}
-		}	
+	public int calculaPuntuacion() {
+		int diagonal = calcDiagonal();
+		int horizontal = calcHorizontal();
+		int vertical =  calcVertical();
+
+		int puntuacion =  diagonal + horizontal + vertical;
+		
+		setGanador(puntuacion);		
+		
+		return puntuacion;
 	}
 	
 	
-	private boolean ponerPieza(int x, int y) {
-
-		if(y > 1 && y < 6 ) return false;
+	
+	private int calcDiagonal() {
+		TIPO tipo = null;
 		
-		Casilla casilla = tablero.getCasilla(x, y);	
-		Pieza pieza = null;	
-		COLOR color;
-		
-			color = (y <= 1) ?  COLOR.BLANCO : COLOR.NEGRO;
+		for(int i = 0; i < Tablero.TAMANO; i++) {							
+			Casilla c = tablero.getCasilla(i, i);
+			if (!c.isOcupada() || (tipo != null && tipo != c.getPieza().getTipo())) {
+				tipo = null;
+				break;
+			}
 
-		if (y == 1 || y == 6) {
-			pieza = new Peon(color);
+			tipo = c.getPieza().getTipo();
+		}		
+		
+		if(tipo != null) 
+			return getPuntuacion(tipo);
+
+
+		for(int i = 0; i < Tablero.TAMANO; i++) {							
+			Casilla c = tablero.getCasilla(Tablero.TAMANO - 1 - i, i);
+			if (!c.isOcupada() || (tipo != null && tipo != c.getPieza().getTipo())) {
+				tipo = null;
+				break;
+			}
+			tipo = c.getPieza().getTipo();
+		}
+		
+		return getPuntuacion(tipo);
+	}
+	
+	private int calcVertical() {		
+		TIPO tipo = null;
+
+		for (int x = 0; x < Tablero.TAMANO; x++) {
 			
-		} else {
-			NOMBRE nombreCase = NOMBRE.valueOf(prop.getProperty(x + ""));
-			switch (nombreCase) {
-			case CABALLO:
-				pieza = new Caballo(color);
-				break;
-			case TORRE:
-				pieza = new Torre(color);
-				break;
-			case REY:
-				pieza = new Rey(color);
-				break;
-			case REINA:
-				pieza = new Reina(color);
-				break;
-			case ALFIL:
-				pieza = new Alfil(color);
-				break;
-			default:
-				break;
+			if(tipo != null) break;
+			
+			for (int y = 0; y < Tablero.TAMANO; y++) {
+
+				Casilla c = tablero.getCasilla(x, y);
+				if (!c.isOcupada() || (tipo != null && tipo != c.getPieza().getTipo())) {
+					tipo = null;
+					break;
+				}
+
+				tipo = c.getPieza().getTipo();
 			}
 		}
-		if(pieza == null ) return false;
 		
-		casilla.ocupar(pieza);
-		tablero.updateCasilla(casilla);
-		return true;
+		return getPuntuacion(tipo);
 	}
+	
+	private int calcHorizontal() {
+		TIPO tipo = null;
 
+		for (int y = 0; y < Tablero.TAMANO; y++) {
+			if(tipo != null) break; // Ha encontrado una fila ganadora
+			for (int x = 0; x < Tablero.TAMANO; x++) {
+
+				Casilla c = tablero.getCasilla(x, y);
+				if (!c.isOcupada() || (tipo != null && tipo != c.getPieza().getTipo())) {
+					tipo = null;
+					break;
+				}
+
+				tipo = c.getPieza().getTipo();
+			}
+		}
+		
+		return getPuntuacion(tipo);
+	}
+	
+	
+	private void setGanador(int puntuacion) {
+		if(puntuacion < 0) ganador = jugador;		// GANA JUGADOR
+		else if(puntuacion > 0) ganador = rival;	// GANA RIVAL
+		else ganador = null;	//EMPATE
+	}
+	
+	private int getPuntuacion(TIPO tipo) {
+		if(tipo == null) return 0;		
+		return (tipo == rival.getTipo())? 1:-1;
+	}
 
 	public Estado getUltimoMovimiento() {
 		if(pila.empty()) return null;
@@ -390,24 +221,16 @@ public class Controlador {
 		return tablero.getCasilla(x, y);
 	}
 	
-	public Pieza getPieza(int x, int y) {
+	public Ficha getPieza(int x, int y) {
 		return tablero.getCasilla(x, y).getPieza();
 	}
 	
-	public Pieza getPieza(int id) {
+	public Ficha getPieza(int id) {
 		return tablero.getCasilla(id).getPieza();
 	}
 	
 	public boolean isCasillaOcupada(int id) {
 		return tablero.getCasilla(id).isOcupada();
-	}
-	
-	public COLOR getColorCasilla(int id) {
-		return tablero.getCasilla(id).getColor();
-	}
-	
-	public COLOR getColorCasilla(int x, int y) {
-		return tablero.getCasilla(x, y).getColor();
 	}
 	
 	
@@ -453,6 +276,31 @@ public class Controlador {
 	public void setTurno(int turno) {
 		this.turno = turno;
 	}
+	
+	
+	public Jugador getContrincante() {		
+		int valorJugador = (empiezaCPU)? 1:0;
+		if(turno % 2 == valorJugador) return rival;
+		return jugador;
+	}
+	
+	public Jugador getJugadorActual() {
+		int valorJugador = (empiezaCPU)? 1:0;
+		if(turno % 2 == valorJugador ) return jugador;
+		return rival;
+		
+	}
+
+
+	public boolean isEmpiezaCPU() {
+		return empiezaCPU;
+	}
+
+
+	public void setEmpiezaCPU(boolean empiezaCPU) {
+		this.empiezaCPU = empiezaCPU;
+	}
+	
 	
 	
 }

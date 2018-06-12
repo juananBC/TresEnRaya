@@ -1,40 +1,39 @@
 package Gestor;
 
-import Juego.COLOR;
-import Juego.Pieza;
-import Juego.Pieza.NOMBRE;
+import Juego.Casilla;
+import Juego.Ficha;
+import Juego.Jugador;
+import Juego.TIPO;
+import Juego.Tablero;
 
 public class Estado  {
-	private Pieza mata;
-	private int idOrigen, idDestino;
+	private Ficha mata;
+	private Casilla casilla;
 	private int turno;
 	private int puntuacion;
-	private COLOR color;
+	private TIPO tipo;
+	private Jugador ganador;
 	
 	private int profundidad;
 	
-	public Estado(int turno, COLOR color, int puntuacion) {
-		this.mata = null;
-		this.idDestino = -1;
-		this.idOrigen = -1;
+	public Estado(int turno, Casilla casilla, int puntuacion, Jugador ganador) {
 		this.turno = turno;
-		this.color = color;
-		this.puntuacion = puntuacion; //(mata == null)? 0:mata.getValorMuerte();
+		this.casilla = casilla;
+		this.puntuacion = puntuacion;
+		this.ganador = ganador; 
 		
-
 		this.profundidad = 0;
 	}
 	
-	public Estado(Pieza mata, int idOrigen, int idDestino, int turno, COLOR color){
-		this.mata = mata;
-		this.idDestino = idDestino;
-		this.idOrigen = idOrigen;
-		this.turno = turno;
-		this.color = color;
-		this.puntuacion = (mata == null)? 0:mata.getValorMuerte();
+	public Estado(int puntuacion) {
+		this.turno = -1;
+		this.casilla = null;
+		this.puntuacion = puntuacion;
+		this.ganador = null; 
 		
-		this.profundidad = 0;
+		this.profundidad = -1;
 	}
+	
 
 	public static Estado max(Estado e1, Estado e2) {
 		if(e1.getPuntuacion() >= e2.getPuntuacion()){
@@ -52,36 +51,17 @@ public class Estado  {
 	
 	public void actualizaPuntos(int puntos) {
 		this.puntuacion += puntos;
-	}
-	
-	
-	public boolean finJuego() {
-		return mata != null && mata.getNombre() == NOMBRE.REY;
-	}
-	
-	public Pieza getMata() {
+	}	
+		
+	public Ficha getMata() {
 		return mata;
 	}
 
-	public void setMata(Pieza mata) {
+	public void setMata(Ficha mata) {
 		this.mata = mata;
 	}
 
-	public int getIdOrigen() {
-		return idOrigen;
-	}
-
-	public void setIdOrigen(int idOrigen) {
-		this.idOrigen = idOrigen;
-	}
-
-	public int getIdDestino() {
-		return idDestino;
-	}
-
-	public void setIdDestino(int idDestino) {
-		this.idDestino = idDestino;
-	}
+	
 
 	public int getTurno() {
 		return turno;
@@ -99,13 +79,24 @@ public class Estado  {
 		this.puntuacion = puntuacion;
 	}
 
-	public COLOR getColor() {
-		return color;
+	
+	public boolean finJuego() {
+		return ganador != null || turno >= Tablero.TAMANO_TOTAL;
+	}
+	
+	public int getIdCasilla() {
+		return casilla.getId();
 	}
 
-	public void setColor(COLOR color) {
-		this.color = color;
+	public TIPO getTipo() {
+		return tipo;
 	}
+
+
+	public void setTipo(TIPO tipo) {
+		this.tipo = tipo;
+	}
+
 
 	public int getProfundidad() {
 		return profundidad;
@@ -113,6 +104,26 @@ public class Estado  {
 
 	public void setProfundidad(int profundidad) {
 		this.profundidad = profundidad;
+	}
+
+
+	public Casilla getCasilla() {
+		return casilla;
+	}
+
+
+	public void setCasilla(Casilla casilla) {
+		this.casilla = casilla;
+	}
+
+
+	public Jugador getGanador() {
+		return ganador;
+	}
+
+
+	public void setGanador(Jugador ganador) {
+		this.ganador = ganador;
 	}
 	
 	

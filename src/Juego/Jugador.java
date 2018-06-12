@@ -1,27 +1,15 @@
 package Juego;
 
-import Excepciones.MovimientoNoValido;
-
 public class Jugador {
 
 	private int numFichas;
-	private COLOR color;
+	private TIPO tipo;
+	private int numPiezas;
 	
-	public Jugador(COLOR color) {
+	public Jugador(TIPO tipo) {
 		this.numFichas = 16;
-		this.color = color;
-	}
-
-	public void mover(Tablero tablero, int origen, int destino) throws MovimientoNoValido {
-
-		// if(!origen.isOcupada()) throw new MovimientoNoValido("Movimiento fuera de
-		// tablero");
-
-	}
-	
-	
-	public void matar() {
-		if(numFichas > 0) numFichas--;
+		this.tipo = tipo;
+		this.numPiezas = 0;
 	}
 
 	public int getNumFichas() {
@@ -32,14 +20,21 @@ public class Jugador {
 		this.numFichas = numFichas;
 	}
 
-	public COLOR getColor() {
-		return color;
+	public TIPO getTipo() {
+		return tipo;
 	}
 
-	public void setColor(COLOR color) {
-		this.color = color;
+	public void setTipo(TIPO tipo) {
+		this.tipo = tipo;
 	}
-	
-	
 
+	public int getNumPiezas() {
+		return numPiezas;
+	}
+
+	public void setNumPiezas(int numPiezas) {
+		this.numPiezas = numPiezas;
+	}
+
+	
 }

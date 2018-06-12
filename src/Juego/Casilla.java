@@ -5,30 +5,23 @@ public class Casilla {
 
 	// El negro sera invertido de signo en los movimientos
 	
-	private boolean ocupada;
-	private Pieza pieza;
+	private Ficha pieza;
 	private int id;
 	private int x,y;
-	private COLOR color;
 
 
-	public Casilla(Pieza pieza, int x, int y) {
-		this.ocupada = true;
+	public Casilla(Ficha pieza, int x, int y) {
 		this.pieza = pieza;
 		this.id = calcId(x,  y);
 		this.x = x;
 		this.y = y;
-		this.color = ((this.x + this.y)%2 == 0)? COLOR.BLANCO: COLOR.NEGRO;;
-
 	}
 
 	public Casilla(int x, int y) {
-		this.ocupada = false;
 		this.pieza = null;
 		this.id = calcId(x, y);
 		this.x = x;
 		this.y = y;
-		this.color = ((this.x + this.y)%2 == 0)? COLOR.BLANCO: COLOR.NEGRO;;
 	}
 	
 	public int getId() {
@@ -48,46 +41,28 @@ public class Casilla {
 	}
 	
 	public void liberar() {
-		ocupada = false;
 		pieza = null;
 	}
 	
-
-	public COLOR getColor() {
-		return color;
-	}
-
-	public void setColor(COLOR color) {
-		this.color = color;
-	}
-	
-	public Pieza ocupar(Pieza pieza) {		
-		Pieza p = null;
-		if(ocupada == true) {
-			p = getPieza();
-		}
+	public boolean ocupar(Ficha pieza) {
+		if(isOcupada()) return false;		
 		
-		ocupada = true;
 		this.pieza = pieza;
 		
-		return p;
+		return true;
 	}
 
 	 
 	public boolean isOcupada() {
-		return ocupada;
+		return pieza != null;
 	}
 
-	public void setOcupada(boolean ocupada) {
-		this.ocupada = ocupada;
-	}
 
-	public Pieza getPieza() {
+	public Ficha getPieza() {
 		return pieza;
 	}
 
-	public void setPieza(Pieza pieza) {
-		this.ocupada = (pieza != null);		
+	public void setPieza(Ficha pieza) {
 		this.pieza = pieza;
 	}
 	
